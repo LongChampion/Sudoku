@@ -1,124 +1,159 @@
 #include <iostream>
+#include <set>
+#include <vector>
+using namespace std;
 
-bool **Row, **Col, ***Area, **Locked;
-long **Table;
-long Counter = 0;
+vector<vector<bool>> Row(9, vector<bool>(10, false)), Col(9, vector<bool>(10, false));
+vector<vector<vector<bool>>> Area(3, vector<vector<bool>>(3, vector<bool>(10, false)));
+vector<vector<long>> Table(9, vector<long>(9, 0));
+vector<vector<bool>> Locked(9, vector<bool>(9, false));
+vector<vector<long>> Solution(9, vector<long>(9, 0));
+vector<vector<set<long>>> Candidate(9, vector<set<long>>(9));
+long NUMBER_OF_SOLUTION = 0;
+long NUMBER_OF_FILLED = 0;
 
-void Initialization();
+void Initilize();
 bool ReadData();
-void Solve(long = 0, long = 0);
-void ShowTable();
-void Finalization();
+void BruteForce(long = 0, long = 0);
+void ShowTable(long = -1, long = -1);
+void ShowSolution();
+void ShowCandidate();
+void Finalize();
+
+void Fill(long, long, long);
+bool ScanByCell(long &, long &, long &);
+bool ScanByRow(long &, long &, long &);
+bool ScanByCol(long &, long &, long &);
+bool ScanByArea(long &, long &, long &);
 
 int main()
 {
-    Initialization();
-    if (ReadData()) Solve();
-    Finalization();
-}
-
-void Initialization()
-{
-    Row = new bool *[9];
-    for (long i = 0; i < 9; ++i)
+    Initilize();
+    if (ReadData())
     {
-        Row[i] = new bool[10];
-        for (long j = 0; j < 10; ++j) Row[i][j] = false;
-    }
-
-    Col = new bool *[9];
-    for (long i = 0; i < 9; ++i)
-    {
-        Col[i] = new bool[10];
-        for (long j = 0; j < 10; ++j) Col[i][j] = false;
-    }
-
-    Area = new bool **[3];
-    for (long i = 0; i < 3; ++i)
-    {
-        Area[i] = new bool *[3];
-        for (long j = 0; j < 3; ++j)
+        ShowTable();
+        cout << endl
+             << "Let begin!!!" << endl;
+        while (NUMBER_OF_FILLED < 81)
         {
-            Area[i][j] = new bool[10];
-            for (long k = 0; k < 10; ++k) Area[i][j][k] = false;
+            long x, y, k;
+
+            if (ScanByCell(x, y, k))
+            {
+                Fill(x, y, k);
+                ShowTable(x, y);
+                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
+                cout << "Can't fill other number in this cell!" << endl;
+                continue;
+            }
+
+            if (ScanByRow(x, y, k))
+            {
+                Fill(x, y, k);
+                ShowTable(x, y);
+                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
+                cout << "Can't fill number " << k << " in other cell in row " << x + 1 << endl;
+                continue;
+            }
+
+            if (ScanByCol(x, y, k))
+            {
+                Fill(x, y, k);
+                ShowTable(x, y);
+                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
+                cout << "Can't fill number " << k << " in other cell in column " << y + 1 << endl;
+                continue;
+            }
+
+            if (ScanByArea(x, y, k))
+            {
+                Fill(x, y, k);
+                ShowTable(x, y);
+                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
+                cout << "Can't fill number " << k << " in other cells in area " << 3 * x + y + 1 << endl;
+                continue;
+            }
+
+            break;
         }
     }
 
-    Locked = new bool *[9];
-    for (long i = 0; i < 9; ++i)
-    {
-        Locked[i] = new bool[9];
-        for (long j = 0; j < 9; ++j)
-            Locked[i][j] = false;
-    }
+    cout << "Congrat, you have solve a sudoku!" << endl;
 
-    Table = new long *[9];
+    Finalize();
+}
+
+void Initilize()
+{
     for (long i = 0; i < 9; ++i)
-    {
-        Table[i] = new long[9];
         for (long j = 0; j < 9; ++j)
-            Table[i][j] = false;
-    }
+            for (long k = 1; k <= 9; ++k)
+                Candidate[i][j].insert(k);
 }
 
 bool ReadData()
 {
-    long rx, ry;
-
-    for (long i = 0; i < 9; ++i)
-        for (long j = 0; j < 9; ++j)
-            std::cin >> Table[i][j];
+    long rx, ry, Temp;
 
     for (long i = 0; i < 9; ++i)
         for (long j = 0; j < 9; ++j)
         {
-            if (Table[i][j] == 0) continue;
+            cin >> Temp;
 
-            if (Table[i][j] < 0 || Table[i][j] > 9)
+            if (Temp == 0) continue;
+
+            if (Temp < 0 || Temp > 9)
             {
-                std::cout << "1: Invalid input at position [" << i + 1 << ", " << j + 1 << ']' << std::endl;
+                cout << "Invalid input at position [" << i + 1 << ", " << j + 1 << ']' << endl;
                 return false;
             }
 
-            if (Row[i][Table[i][j]])
+            if (Row[i][Temp])
             {
-                std::cout << "2: Invalid input at position [" << i + 1 << ", " << j + 1 << ']' << std::endl;
+                cout << "Invalid input at position [" << i + 1 << ", " << j + 1 << ']' << endl;
                 return false;
             }
 
-            if (Col[j][Table[i][j]])
+            if (Col[j][Temp])
             {
-                std::cout << "3: Invalid input at position [" << i + 1 << ", " << j + 1 << ']' << std::endl;
+                cout << "Invalid input at position [" << i + 1 << ", " << j + 1 << ']' << endl;
                 return false;
             }
 
             rx = (i / 3) * 3;
             ry = (j / 3) * 3;
             for (long dx = 0; dx < 3; ++dx)
-            {
                 for (long dy = 0; dy < 3; ++dy)
-                    if ((rx + dx != i || ry + dy != j) && Table[i][j] == Table[rx + dx][ry + dy])
+                    if (Temp == Table[rx + dx][ry + dy])
                     {
-                        std::cout << "4: Invalid input at position [" << i + 1 << ", " << j + 1 << ']' << std::endl;
+                        cout << "Invalid input at position [" << i + 1 << ", " << j + 1 << ']' << endl;
                         return false;
                     }
-            }
 
-            Locked[i][j] = true;
+            Fill(i, j, Temp);
             Row[i][Table[i][j]] = Col[j][Table[i][j]] = Area[i / 3][j / 3][Table[i][j]] = true;
         }
 
-    return true;
+    BruteForce();
+    if (NUMBER_OF_SOLUTION > 1)
+        cout << "More than one solution found!" << endl;
+    else if (NUMBER_OF_SOLUTION == 0)
+        cout << "No solution found" << endl;
+
+    return NUMBER_OF_SOLUTION == 1;
 }
 
-void Solve(long x, long y)
+void BruteForce(long x, long y)
 {
-    if (y >= 9)
-        Solve(x + 1, 0);
+    if (NUMBER_OF_SOLUTION > 1) return;
+
+    if (y >= 9) BruteForce(x + 1, 0);
 
     if (x >= 9)
     {
-        ShowTable();
+        ++NUMBER_OF_SOLUTION;
+        if (NUMBER_OF_SOLUTION == 1)
+            Solution = Table;
         return;
     }
 
@@ -129,67 +164,209 @@ void Solve(long x, long y)
             if (Row[x][k] || Col[y][k] || Area[x / 3][y / 3][k]) continue;
             Table[x][y] = k;
             Row[x][k] = Col[y][k] = Area[x / 3][y / 3][k] = true;
-            Solve(x, y + 1);
+            BruteForce(x, y + 1);
             Table[x][y] = 0;
             Row[x][k] = Col[y][k] = Area[x / 3][y / 3][k] = false;
         }
     }
     else
-        Solve(x, y + 1);
+        BruteForce(x, y + 1);
 }
 
-void ShowTable()
+void ShowTable(long x, long y)
 {
-    long Space = 14, Temp = ++Counter;
-    while (Temp > 99)
-    {
-        --Space;
-        Temp /= 100;
-    }
-
-    std::cout << std::endl;
-    while (--Space) std::cout << ' ';
-    std::cout << "\e[1;33mSolution " << Counter << "\e[0m" << std::endl;
-
     for (long i = 0; i < 9; ++i)
     {
         if (i % 3 == 0)
-            std::cout << "\e[1;34m+---+---+---+---+---+---+---+---+---+\e[0m" << std::endl;
+            cout << "\e[1;34m+---+---+---+---+---+---+---+---+---+\e[0m" << endl;
         else
-            std::cout << "\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0m" << std::endl;
-
+            cout << "\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0m" << endl;
 
         for (long j = 0; j < 9; ++j)
-            std::cout << (j % 3 == 0 ? "\e[1;34m| " : "\e[0;34m| ") << (Locked[i][j] ? "\e[1;34m" : "\e[1;32m") << Table[i][j] << "\e[0m ";
-        std::cout << "\e[1;34m|\e[0m" << std::endl;
+        {
+            cout << (j % 3 == 0 ? "\e[1;34m| " : "\e[0;34m| ");
+            if (Locked[i][j])
+            {
+                if (i == x && j == y)
+                    cout << "\e[1;31m" << Table[i][j] << "\e[0m ";
+                else
+                    cout << "\e[1;32m" << Table[i][j] << "\e[0m ";
+            }
+            else
+                cout << "\e[1;32m  \e[0m";
+        }
+
+        cout << "\e[1;34m|\e[0m" << endl;
     }
 
-    std::cout << "\e[1;34m+---+---+---+---+---+---+---+---+---+\e[0m" << std::endl;
+    cout << "\e[1;34m+---+---+---+---+---+---+---+---+---+\e[0m" << endl;
 }
 
-void Finalization()
+void ShowSolution()
 {
     for (long i = 0; i < 9; ++i)
-        delete[] Row[i];
-    delete[] Row;
-
-    for (long i = 0; i < 9; ++i)
-        delete[] Col[i];
-    delete[] Col;
-
-    for (long i = 0; i < 3; ++i)
     {
-        for (long j = 0; j < 3; ++j)
-            delete[] Area[i][j];
-        delete[] Area[i];
+        if (i % 3 == 0)
+            cout << "\e[1;34m+---+---+---+---+---+---+---+---+---+\e[0m" << endl;
+        else
+            cout << "\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0m" << endl;
+
+        for (long j = 0; j < 9; ++j)
+            cout << (j % 3 == 0 ? "\e[1;34m| " : "\e[0;34m| ") << (Locked[i][j] ? "\e[1;34m" : "\e[1;32m") << Solution[i][j] << "\e[0m ";
+        cout << "\e[1;34m|\e[0m" << endl;
     }
-    delete[] Area;
 
-    for (long i = 0; i < 9; ++i)
-        delete[] Locked[i];
-    delete[] Locked;
+    cout << "\e[1;34m+---+---+---+---+---+---+---+---+---+\e[0m" << endl;
+}
 
+void ShowCandidate()
+{
+    for (long row = 0; row < 9; ++row)
+    {
+        if (row % 3 == 0)
+            cout << "+-----------------------+-----------------------+-----------------------+" << endl;
+        else
+            cout << "|                       |                       |                       |" << endl;
+
+
+        for (long i = 0; i < 3; ++i)
+        {
+            for (long col = 0; col < 9; ++col)
+            {
+                if (col % 3 == 0)
+                    cout << "| ";
+                else
+                    cout << "  ";
+                for (long j = 0; j < 3; ++j)
+                    if (Candidate[row][col].find(3 * i + j + 1) != Candidate[row][col].end())
+                        cout << 3 * i + j + 1 << ' ';
+                    else
+                        cout << "  ";
+            }
+            cout << '|' << endl;
+        }
+    }
+    cout << "+-----------------------+-----------------------+-----------------------+" << endl;
+}
+
+void Finalize()
+{
+}
+
+void Fill(long x, long y, long key)
+{
+    if (Locked[x][y])
+    {
+        cout << "Can't fill locked cell" << endl;
+        return;
+    }
+
+    if (key != Solution[x][y] && Solution[x][y] != 0)
+        cout << "FATAL ERROR: Wrong filling!" << endl;
+
+    Table[x][y] = key;
+    Locked[x][y] = true;
+    Candidate[x][y].clear();
+    ++NUMBER_OF_FILLED;
+
+    for (long k = 0; k < 9; ++k)
+    {
+        Candidate[x][k].erase(key);
+        Candidate[k][y].erase(key);
+    }
+
+    long rx = (x / 3) * 3, ry = (y / 3) * 3;
+    for (long i = 0; i < 3; ++i)
+        for (long j = 0; j < 3; ++j)
+            Candidate[rx + i][ry + j].erase(key);
+}
+
+bool ScanByCell(long &x, long &y, long &k)
+{
     for (long i = 0; i < 9; ++i)
-        delete[] Table[i];
-    delete[] Table;
+        for (long j = 0; j < 9; ++j)
+            if (Candidate[i][j].size() == 1)
+            {
+                x = i;
+                y = j;
+                k = *Candidate[i][j].begin();
+                return true;
+            }
+    return false;
+}
+
+bool ScanByRow(long &x, long &y, long &k)
+{
+    for (long key = 1; key <= 9; ++key)
+    {
+        for (long row = 0; row < 9; ++row)
+        {
+            long col = -1;
+            for (long j = 0; j < 9; ++j)
+                if (Candidate[row][j].find(key) != Candidate[row][j].end())
+                    if (col == -1)
+                        col = j;
+                    else
+                        col = -2;
+            if (col >= 0)
+            {
+                x = row;
+                y = col;
+                k = key;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool ScanByCol(long &x, long &y, long &k)
+{
+    for (long key = 1; key <= 9; ++key)
+    {
+        for (long col = 0; col < 9; ++col)
+        {
+            long row = -1;
+            for (long i = 0; i < 9; ++i)
+                if (Candidate[i][col].find(key) != Candidate[i][col].end())
+                    if (row == -1)
+                        row = i;
+                    else
+                        row = -2;
+            if (row >= 0)
+            {
+                x = row;
+                y = col;
+                k = key;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool ScanByArea(long &x, long &y, long &k)
+{
+    for (long key = 1; key <= 9; ++key)
+    {
+        for (long rx = 0; rx < 9; rx += 3)
+            for (long ry = 0; ry < 9; ry += 3)
+            {
+                long count = 0;
+                for (long i = 0; i < 3; ++i)
+                    for (long j = 0; j < 3; ++j)
+                        if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
+                        {
+                            ++count;
+                            if (count == 1)
+                            {
+                                x = rx + i;
+                                y = ry + j;
+                                k = key;
+                            }
+                        }
+                if (count == 1) return true;
+            }
+    }
+    return false;
 }
