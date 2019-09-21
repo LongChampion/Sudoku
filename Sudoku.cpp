@@ -29,11 +29,18 @@ bool ScanByArea(long &, long &, long &);
 int main()
 {
     Initilize();
+
     if (ReadData())
     {
         ShowTable();
+
         cout << endl
-             << "Let begin!!!" << endl;
+             << "There is the solution:" << endl;
+        ShowSolution();
+
+        cout << endl
+             << "Let explain why we have that solution!" << endl;
+
         while (NUMBER_OF_FILLED < 81)
         {
             long x, y, k;
@@ -52,7 +59,7 @@ int main()
                 Fill(x, y, k);
                 ShowTable(x, y);
                 cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
-                cout << "Can't fill number " << k << " in other cell in row " << x + 1 << endl;
+                cout << "Can't fill number " << k << " in other cells in row " << x + 1 << '.' << endl;
                 continue;
             }
 
@@ -61,7 +68,7 @@ int main()
                 Fill(x, y, k);
                 ShowTable(x, y);
                 cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
-                cout << "Can't fill number " << k << " in other cell in column " << y + 1 << endl;
+                cout << "Can't fill number " << k << " in other cells in column " << y + 1 << '.' << endl;
                 continue;
             }
 
@@ -70,15 +77,17 @@ int main()
                 Fill(x, y, k);
                 ShowTable(x, y);
                 cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
-                cout << "Can't fill number " << k << " in other cells in area " << 3 * x + y + 1 << endl;
+                cout << "Can't fill number " << k << " in other cells in area " << (x / 3) * 3 + y / 3 + 1 << '.' << endl;
                 continue;
             }
 
+            cout << "Oh shit! I have no ideal now. Try again next time." << endl;
             break;
         }
     }
 
-    cout << "Congrat, you have solve a sudoku!" << endl;
+    if (NUMBER_OF_FILLED == 81)
+        cout << "Congrat, you have solve a sudoku!" << endl;
 
     Finalize();
 }
@@ -212,7 +221,7 @@ void ShowSolution()
             cout << "\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0;34m---+---+---\e[1;34m+\e[0m" << endl;
 
         for (long j = 0; j < 9; ++j)
-            cout << (j % 3 == 0 ? "\e[1;34m| " : "\e[0;34m| ") << (Locked[i][j] ? "\e[1;34m" : "\e[1;32m") << Solution[i][j] << "\e[0m ";
+            cout << (j % 3 == 0 ? "\e[1;34m| " : "\e[0;34m| ") << (Locked[i][j] ? "\e[1;32m" : "\e[1;35m") << Solution[i][j] << "\e[0m ";
         cout << "\e[1;34m|\e[0m" << endl;
     }
 
