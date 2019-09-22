@@ -9,6 +9,7 @@ vector<vector<long>> Table(9, vector<long>(9, 0));
 vector<vector<bool>> Locked(9, vector<bool>(9, false));
 vector<vector<long>> Solution(9, vector<long>(9, 0));
 vector<vector<set<long>>> Candidate(9, vector<set<long>>(9));
+vector<vector<string>> Reason(9, vector<string>(9));
 long NUMBER_OF_SOLUTION = 0;
 long NUMBER_OF_FILLED = 0;
 
@@ -25,6 +26,11 @@ bool ScanByCell(long &, long &, long &);
 bool ScanByRow(long &, long &, long &);
 bool ScanByCol(long &, long &, long &);
 bool ScanByArea(long &, long &, long &);
+
+void OptimizeCandidate();
+bool OptimizeByRow();
+bool OptimizeByCol();
+bool OptimizeByArea();
 
 int main()
 {
@@ -45,12 +51,15 @@ int main()
         {
             long x, y, k;
 
+            OptimizeCandidate();
+
             if (ScanByCell(x, y, k))
             {
                 Fill(x, y, k);
                 ShowTable(x, y);
-                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
+                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t";
                 cout << "Can't fill other number in this cell!" << endl;
+                if (!Reason[x][y].empty()) cout << Reason[x][y] << endl;
                 continue;
             }
 
@@ -58,8 +67,9 @@ int main()
             {
                 Fill(x, y, k);
                 ShowTable(x, y);
-                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
+                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t";
                 cout << "Can't fill number " << k << " in other cells in row " << x + 1 << '.' << endl;
+                if (!Reason[x][y].empty()) cout << Reason[x][y] << endl;
                 continue;
             }
 
@@ -67,8 +77,9 @@ int main()
             {
                 Fill(x, y, k);
                 ShowTable(x, y);
-                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
+                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t";
                 cout << "Can't fill number " << k << " in other cells in column " << y + 1 << '.' << endl;
+                if (!Reason[x][y].empty()) cout << Reason[x][y] << endl;
                 continue;
             }
 
@@ -76,12 +87,13 @@ int main()
             {
                 Fill(x, y, k);
                 ShowTable(x, y);
-                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t\t";
+                cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t";
                 cout << "Can't fill number " << k << " in other cells in area " << (x / 3) * 3 + y / 3 + 1 << '.' << endl;
                 continue;
             }
 
             cout << "Oh shit! I have no ideal now. Try again next time." << endl;
+            ShowCandidate();
             break;
         }
     }
@@ -271,7 +283,10 @@ void Fill(long x, long y, long key)
     }
 
     if (key != Solution[x][y] && Solution[x][y] != 0)
-        cout << "FATAL ERROR: Wrong filling!" << endl;
+    {
+        cout << "FATAL ERROR: Wrong filling at [" << x + 1 << ", " << y + 1 << ']' << endl;
+        ShowCandidate();
+    }
 
     Table[x][y] = key;
     Locked[x][y] = true;
@@ -375,6 +390,150 @@ bool ScanByArea(long &x, long &y, long &k)
                             }
                         }
                 if (count == 1) return true;
+            }
+    }
+    return false;
+}
+
+void OptimizeCandidate()
+{
+    while (true)
+    {
+        if (OptimizeByRow()) continue;
+        if (OptimizeByCol()) continue;
+        if (OptimizeByArea()) continue;
+        break;
+    }
+}
+
+bool OptimizeByRow()
+{
+    for (long key = 1; key <= 9; ++key)
+    {
+        for (long row = 0; row < 9; ++row)
+        {
+            vector<long> col;
+            for (long j = 0; j < 9; ++j)
+                if (Candidate[row][j].find(key) != Candidate[row][j].end())
+                    col.push_back(j);
+            if (col.size() > 1 && col.size() < 4 && col.back() - col[0] < 3 && col.back() / 3 == col[0] / 3)
+            {
+                long rx = (row / 3) * 3;
+                long ry = (col[0] / 3) * 3;
+                long count = 0;
+
+                for (long i = 0; i < 3; ++i)
+                {
+                    if (rx + i == row) continue;
+                    for (long j = 0; j < 3; ++j)
+                        if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
+                        {
+                            Candidate[rx + i][ry + j].erase(key);
+                            Reason[rx + i][ry + j] += "Optimize by row " + to_string(row + 1) + " with number " + to_string(key) + ". ";
+                            ++count;
+                        }
+                }
+
+                if (count > 0) return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool OptimizeByCol()
+{
+    for (long key = 1; key <= 9; ++key)
+    {
+        for (long col = 0; col < 9; ++col)
+        {
+            vector<long> row;
+            for (long i = 0; i < 9; ++i)
+                if (Candidate[i][col].find(key) != Candidate[i][col].end())
+                    row.push_back(i);
+            if (row.size() > 1 && row.size() < 4 && row.back() - row[0] < 3 && row.back() / 3 == row[0] / 3)
+            {
+                long rx = (row[0] / 3) * 3;
+                long ry = (col / 3) * 3;
+                long count = 0;
+
+                for (long j = 0; j < 3; ++j)
+                {
+                    if (ry + j == col) continue;
+                    for (long i = 0; i < 3; ++i)
+                        if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
+                        {
+                            Candidate[rx + i][ry + j].erase(key);
+                            Reason[rx + i][ry + j] += "Optimize by column " + to_string(col + 1) + " with number " + to_string(key) + ". ";
+                            ++count;
+                        }
+                }
+
+                if (count > 0) return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool OptimizeByArea()
+{
+    for (long key = 1; key <= 9; ++key)
+    {
+        for (long rx = 0; rx < 9; rx += 3)
+            for (long ry = 0; ry < 9; ry += 3)
+            {
+                vector<pair<long, long>> A;
+                long row = -1, col = -1, count = 0;
+
+                for (long i = 0; i < 3; ++i)
+                    for (long j = 3; j < 3; ++j)
+                        if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
+                            A.push_back({rx + i, ry + j});
+
+                if (A.size() < 2 || A.size() > 3) continue;
+
+                if (A[0].first == A[1].first)
+                    row = A[0].first;
+                else if (A[0].second == A[1].second)
+                    col = A[0].second;
+                else
+                    continue;
+
+                if (A.size() == 3)
+                {
+                    if (row >= 0 && A[2].first != row) continue;
+                    if (col >= 0 && A[2].second != col) continue;
+                }
+
+                if (row >= 0)
+                {
+                    for (long j = 0; j < 9; ++j)
+                    {
+                        if (j / 3 == ry / 3)
+                            for (pair<long, long> &X : A)
+                                if (j == X.second) continue;
+
+                        Candidate[row][j].erase(key);
+                        Reason[row][j] += "Optimize by area " + to_string(rx + ry / 3 + 1) + " with number " + to_string(key) + ". ";
+                        ++count;
+                    }
+                }
+                else
+                {
+                    for (long i = 0; i < 9; ++i)
+                    {
+                        if (i / 3 == rx / 3)
+                            for (pair<long, long> &X : A)
+                                if (i == X.first) continue;
+
+                        Candidate[i][col].erase(key);
+                        Reason[i][col] += "Optimize by area " + to_string(rx + ry / 3 + 1) + " with number " + to_string(key) + ". ";
+                        ++count;
+                    }
+                }
+
+                if (count > 0) return true;
             }
     }
     return false;
