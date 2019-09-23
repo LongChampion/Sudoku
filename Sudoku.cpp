@@ -31,6 +31,9 @@ void OptimizeCandidate();
 bool OptimizeByRow();
 bool OptimizeByCol();
 bool OptimizeByArea();
+bool OptimizePerRow();
+bool OptimizePerCol();
+bool OptimizePerArea();
 
 int main()
 {
@@ -402,6 +405,9 @@ void OptimizeCandidate()
         if (OptimizeByRow()) continue;
         if (OptimizeByCol()) continue;
         if (OptimizeByArea()) continue;
+        if (OptimizePerRow()) continue;
+        if (OptimizePerCol()) continue;
+        if (OptimizePerArea()) continue;
         break;
     }
 }
@@ -429,7 +435,7 @@ bool OptimizeByRow()
                         if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
                         {
                             Candidate[rx + i][ry + j].erase(key);
-                            Reason[rx + i][ry + j] += "Optimize by row " + to_string(row + 1) + " with number " + to_string(key) + ". ";
+                            Reason[rx + i][ry + j] += " Number " + to_string(key) + " of this area must be fill in row " + to_string(row + 1) + ".";
                             ++count;
                         }
                 }
@@ -464,7 +470,7 @@ bool OptimizeByCol()
                         if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
                         {
                             Candidate[rx + i][ry + j].erase(key);
-                            Reason[rx + i][ry + j] += "Optimize by column " + to_string(col + 1) + " with number " + to_string(key) + ". ";
+                            Reason[rx + i][ry + j] += " Number " + to_string(key) + " of this area must be fill in col " + to_string(col + 1) + '.';
                             ++count;
                         }
                 }
@@ -511,11 +517,15 @@ bool OptimizeByArea()
                     for (long j = 0; j < 9; ++j)
                     {
                         if (j / 3 == ry / 3)
+                        {
+                            bool IsOK = true;
                             for (pair<long, long> &X : A)
-                                if (j == X.second) continue;
+                                if (j == X.second) IsOK = false;
+                            if (!IsOK) continue;
+                        }
 
                         Candidate[row][j].erase(key);
-                        Reason[row][j] += "Optimize by area " + to_string(rx + ry / 3 + 1) + " with number " + to_string(key) + ". ";
+                        Reason[row][j] += " Number " + to_string(key) + " of this row must be fill in area " + to_string(rx + ry / 3 + 1) + '.';
                         ++count;
                     }
                 }
@@ -524,11 +534,16 @@ bool OptimizeByArea()
                     for (long i = 0; i < 9; ++i)
                     {
                         if (i / 3 == rx / 3)
+                        {
+                            bool IsOK = true;
                             for (pair<long, long> &X : A)
-                                if (i == X.first) continue;
+                                if (i == X.first) IsOK = false;
+                            if (!IsOK) continue;
+                        }
 
-                        Candidate[i][col].erase(key);
-                        Reason[i][col] += "Optimize by area " + to_string(rx + ry / 3 + 1) + " with number " + to_string(key) + ". ";
+                        Candidate[i][col]
+                            .erase(key);
+                        Reason[i][col] += " Number " + to_string(key) + " of this column must be fill in area " + to_string(rx + ry / 3 + 1) + '.';
                         ++count;
                     }
                 }
@@ -536,5 +551,139 @@ bool OptimizeByArea()
                 if (count > 0) return true;
             }
     }
+    return false;
+}
+
+bool OptimizePerRow()
+{
+    vector<long> col, Target;
+    set<long> Union;
+    long n, count = 0;
+
+    for (long row = 0; row < 9; ++row)
+    {
+        col.clear();
+        for (long j = 0; j < 9; ++j)
+            if (!Locked[row][j])
+                col.push_back(j);
+
+        n = col.size();
+        for (long mask = (1 << n) - 1; mask > 0; --mask)
+        {
+            Union.clear();
+            Target.clear();
+
+            for (long i = 0; i < n; ++i)
+                if (((1 << i) & mask) != 0)
+                    for (const long &x : Candidate[row][col[i]])
+                        Union.insert(x);
+                else
+                    Target.push_back(col[i]);
+
+            if (Union.size() == __builtin_popcount(mask))
+            {
+                for (long &j : Target)
+                    for (const long &x : Union)
+                        if (Candidate[row][j].find(x) != Candidate[row][j].end())
+                        {
+                            Candidate[row][j].erase(x);
+                            Reason[row][j] += " Remove number " + to_string(x) + " because row " + to_string(row + 1) + '.';
+                            ++count;
+                        }
+
+                if (count > 0) return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool OptimizePerCol()
+{
+    vector<long> row, Target;
+    set<long> Union;
+    long n, count = 0;
+
+    for (long col = 0; col < 9; ++col)
+    {
+        row.clear();
+        for (long i = 0; i < 9; ++i)
+            if (!Locked[i][col])
+                row.push_back(i);
+
+        n = row.size();
+        for (long mask = (1 << n) - 1; mask > 0; --mask)
+        {
+            Union.clear();
+            Target.clear();
+
+            for (long i = 0; i < n; ++i)
+                if (((1 << i) & mask) != 0)
+                    for (const long &x : Candidate[row[i]][col])
+                        Union.insert(x);
+                else
+                    Target.push_back(row[i]);
+
+            if (Union.size() == __builtin_popcount(mask))
+            {
+                for (long &i : Target)
+                    for (const long &x : Union)
+                        if (Candidate[i][col].find(x) != Candidate[i][col].end())
+                        {
+                            Candidate[i][col].erase(x);
+                            Reason[i][col] += " Remove number " + to_string(x) + " because column " + to_string(col + 1) + '.';
+                            ++count;
+                        }
+
+                if (count > 0) return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool OptimizePerArea()
+{
+    vector<pair<long, long>> Cell, Target;
+    set<long> Union;
+    long n, count = 0;
+
+    for (long rx = 0; rx < 9; rx += 3)
+        for (long ry = 0; ry < 9; ry += 3)
+        {
+            Cell.clear();
+            for (long i = 0; i < 3; ++i)
+                for (long j = 0; j < 3; ++j)
+                    if (!Locked[rx + i][ry + j])
+                        Cell.push_back({rx + i, ry + j});
+
+            n = Cell.size();
+            for (long mask = (1 << n) - 1; mask > 0; --mask)
+            {
+                Union.clear();
+                Target.clear();
+
+                for (long i = 0; i < n; ++i)
+                    if (((1 << i) & mask) != 0)
+                        for (const long &x : Candidate[Cell[i].first][Cell[i].second])
+                            Union.insert(x);
+                    else
+                        Target.push_back(Cell[i]);
+
+                if (Union.size() == __builtin_popcount(mask))
+                {
+                    for (pair<long, long> &X : Target)
+                        for (const long &x : Union)
+                            if (Candidate[X.first][X.second].find(x) != Candidate[X.first][X.second].end())
+                            {
+                                Candidate[X.first][X.second].erase(x);
+                                Reason[X.first][X.second] += " Remove number " + to_string(x) + " because area " + to_string(rx + ry / 3 + 1) + '.';
+                                ++count;
+                            }
+
+                    if (count > 0) return true;
+                }
+            }
+        }
     return false;
 }
