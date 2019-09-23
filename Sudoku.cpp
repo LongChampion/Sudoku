@@ -99,7 +99,7 @@ int main()
     }
 
     if (NUMBER_OF_FILLED == 81)
-        cout << "Congrat, you have solve a sudoku!" << endl;
+        cout << "Congrat, you have solved a sudoku!" << endl;
 
     Finalize();
 }
@@ -159,7 +159,7 @@ bool ReadData()
     if (NUMBER_OF_SOLUTION > 1)
         cout << "More than one solution found!" << endl;
     else if (NUMBER_OF_SOLUTION == 0)
-        cout << "No solution found" << endl;
+        cout << "No solution found!" << endl;
 
     return NUMBER_OF_SOLUTION == 1;
 }
