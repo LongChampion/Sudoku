@@ -34,6 +34,7 @@ bool OptimizeByArea();
 bool OptimizePerRow();
 bool OptimizePerCol();
 bool OptimizePerArea();
+bool SmartEliminate();
 
 int main()
 {
@@ -408,6 +409,7 @@ void OptimizeCandidate()
         if (OptimizePerRow()) continue;
         if (OptimizePerCol()) continue;
         if (OptimizePerArea()) continue;
+        if (SmartEliminate()) continue;
         break;
     }
 }
@@ -685,5 +687,70 @@ bool OptimizePerArea()
                 }
             }
         }
+    return false;
+}
+
+bool SmartEliminate()
+{
+    long count = 0;
+    set<long> Owned, Contributor;
+
+    for (long key = 1; key <= 9; ++key)
+        for (long rx = 0; rx < 9; rx += 3)
+            for (long ry = 0; ry < 9; ry += 3)
+            {
+                Owned.clear();
+                Contributor.clear();
+
+                for (long i = 0; i < 3; ++i)
+                    for (long j = 0; j < 9; ++j)
+                    {
+                        if (j / 3 == ry / 3) continue;
+                        if (Candidate[rx + i][j].find(key) != Candidate[rx + i][j].end())
+                        {
+                            Owned.insert(rx + i);
+                            Contributor.insert(j / 3);
+                        }
+                    }
+
+                if (Owned.size() == 2 && Contributor.size() == 2)
+                    for (long i = 0; i < 3; ++i)
+                        for (long j = 0; j < 3; ++j)
+                            if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
+                                if (Owned.find(rx + i) != Owned.end())
+                                {
+                                    Candidate[rx + i][ry + j].erase(key);
+                                    Reason[rx + i][ry + j] += " Eliminate number " + to_string(key) + " by big row " + to_string(rx / 3 + 1) + '.';
+                                    ++count;
+                                }
+
+                if (count > 0) return true;
+
+                Owned.clear();
+                Contributor.clear();
+
+                for (long j = 0; j < 3; ++j)
+                    for (long i = 0; i < 9; ++i)
+                    {
+                        if (i / 3 == rx / 3) continue;
+                        if (Candidate[i][ry + j].find(key) != Candidate[i][ry + j].end())
+                        {
+                            Owned.insert(ry + j);
+                            Contributor.insert(i / 3);
+                        }
+                    }
+
+                if (Owned.size() == 2 && Contributor.size() == 2)
+                    for (long i = 0; i < 3; ++i)
+                        for (long j = 0; j < 3; ++j)
+                            if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
+                                if (Owned.find(ry + j) != Owned.end())
+                                {
+                                    Candidate[rx + i][ry + j].erase(key);
+                                    Reason[rx + i][ry + j] += " Eliminate number " + to_string(key) + " by big column " + to_string(ry / 3 + 1) + '.';
+                                }
+
+                if (count > 0) return true;
+            }
     return false;
 }
