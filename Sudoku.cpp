@@ -801,14 +801,14 @@ void FuckingFeature(long px, long py)
         {
             if (!Locked[X.first][X.second] && Candidate[X.first][X.second].empty())
             {
-                cout << "We can't fill any number to cell [" << X.first + 1 << ' ' << X.second + 1 << ']' << endl;
+                cout << "We can't fill any number to cell [" << X.first + 1 << ", " << X.second + 1 << ']' << endl;
                 ErrorDetected = true;
                 break;
             }
             else if (Candidate[X.first][X.second].size() == 1)
             {
                 key = *Candidate[X.first][X.second].begin();
-                cout << "We must fill " << key << " in cell [" << X.first + 1 << ' ' << X.second + 1 << ']' << endl;
+                cout << "We must fill " << key << " in cell [" << X.first + 1 << ", " << X.second + 1 << ']' << endl;
                 Fill(X.first, X.second, key, true);
                 ShowTable(X.first, X.second, true);
                 break;
