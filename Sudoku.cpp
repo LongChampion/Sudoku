@@ -106,8 +106,8 @@ int main()
                     {
                         CanBeContinue = true;
                         FuckingFeature(i, j);
-                        Candidate[i][j].clear();
-                        Candidate[i][j].insert(Solution[i][j]);
+                        Fill(i, j, Solution[i][j]);
+                        ShowTable(i, j);
                     }
 
             if (CanBeContinue) continue;
@@ -779,9 +779,11 @@ void FuckingFeature(long px, long py)
     vector<vector<long>> TableBackup = Table;
     vector<vector<bool>> LockedBackup = Locked;
     vector<vector<set<long>>> CandidateBackup = Candidate;
+    vector<vector<string>> ReasonBackup = Reason;
     long NUMBER_OF_FILLED_BACKUP = NUMBER_OF_FILLED;
+
     vector<pair<long, long>> Target;
-    bool ErrorDetected = false;
+    bool ErrorDetected = false, Changed;
 
     long key = -1;
     for (const long &x : Candidate[px][py])
@@ -792,16 +794,19 @@ void FuckingFeature(long px, long py)
         for (long j = 0; j < 9; ++j)
             if (!Locked[i][j]) Target.push_back({i, j});
 
+    cout << "Cell [" << px + 1 << ", " << py + 1 << "] can be filled by number " << key << " or number " << Solution[px][py] << endl;
     cout << "Let try [" << px + 1 << ", " << py + 1 << "] = " << key << endl;
     Fill(px, py, key, true);
     ShowTable(px, py, true);
+
     while (!ErrorDetected)
     {
+        Changed = false;
         for (pair<long, long> X : Target)
-        {
             if (!Locked[X.first][X.second] && Candidate[X.first][X.second].empty())
             {
                 cout << "We can't fill any number to cell [" << X.first + 1 << ", " << X.second + 1 << ']' << endl;
+                cout << Reason[X.first][X.second] << endl;
                 ErrorDetected = true;
                 break;
             }
@@ -811,13 +816,17 @@ void FuckingFeature(long px, long py)
                 cout << "We must fill " << key << " in cell [" << X.first + 1 << ", " << X.second + 1 << ']' << endl;
                 Fill(X.first, X.second, key, true);
                 ShowTable(X.first, X.second, true);
+                Changed = true;
                 break;
             }
-        }
+        if (!Changed) OptimizeCandidate();
     }
+
+    cout << "Now we must fill cell [" << px + 1 << ", " << py + 1 << "] by " << Solution[px][py] << endl;
 
     Table = TableBackup;
     Locked = LockedBackup;
     Candidate = CandidateBackup;
+    Reason = ReasonBackup;
     NUMBER_OF_FILLED = NUMBER_OF_FILLED_BACKUP;
 }
