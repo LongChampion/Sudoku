@@ -16,12 +16,12 @@ long NUMBER_OF_FILLED = 0;
 void Initilize();
 bool ReadData();
 void BruteForce(long = 0, long = 0);
-void ShowTable(long = -1, long = -1);
+void ShowTable(long = -1, long = -1, bool = false);
 void ShowSolution();
 void ShowCandidate();
 void Finalize();
 
-void Fill(long, long, long);
+void Fill(long, long, long, bool = false);
 bool ScanByCell(long &, long &, long &);
 bool ScanByRow(long &, long &, long &);
 bool ScanByCol(long &, long &, long &);
@@ -34,6 +34,8 @@ bool OptimizeByArea();
 bool OptimizePerRow();
 bool OptimizePerCol();
 bool OptimizePerArea();
+
+void FuckingFeature(long, long);
 
 int main()
 {
@@ -94,6 +96,20 @@ int main()
                 cout << "Can't fill number " << k << " in other cells in area " << (x / 3) * 3 + y / 3 + 1 << '.' << endl;
                 continue;
             }
+
+            bool CanBeContinue = false;
+
+            for (long i = 0; i < 9 && !CanBeContinue; ++i)
+                for (long j = 0; j < 9 && !CanBeContinue; ++j)
+                    if (Candidate[i][j].size() == 2)
+                    {
+                        CanBeContinue = true;
+                        FuckingFeature(i, j);
+                        Candidate[i][j].clear();
+                        Candidate[i][j].insert(Solution[i][j]);
+                    }
+
+            if (CanBeContinue) continue;
 
             cout << "Oh shit! I have no ideal now. Try again next time." << endl;
             ShowCandidate();
@@ -197,7 +213,7 @@ void BruteForce(long x, long y)
         BruteForce(x, y + 1);
 }
 
-void ShowTable(long x, long y)
+void ShowTable(long x, long y, bool Trying)
 {
     for (long i = 0; i < 9; ++i)
     {
@@ -212,7 +228,10 @@ void ShowTable(long x, long y)
             if (Locked[i][j])
             {
                 if (i == x && j == y)
-                    cout << "\e[1;31m" << Table[i][j] << "\e[0m ";
+                    if (!Trying)
+                        cout << "\e[1;31m" << Table[i][j] << "\e[0m ";
+                    else
+                        cout << "\e[1;35m" << Table[i][j] << "\e[0m ";
                 else
                     cout << "\e[1;32m" << Table[i][j] << "\e[0m ";
             }
@@ -277,7 +296,7 @@ void Finalize()
 {
 }
 
-void Fill(long x, long y, long key)
+void Fill(long x, long y, long key, bool Trying)
 {
     if (Locked[x][y])
     {
@@ -285,7 +304,7 @@ void Fill(long x, long y, long key)
         return;
     }
 
-    if (key != Solution[x][y] && Solution[x][y] != 0)
+    if (key != Solution[x][y] && Solution[x][y] != 0 && !Trying)
     {
         cout << "FATAL ERROR: Wrong filling at [" << x + 1 << ", " << y + 1 << ']' << endl;
         ShowCandidate();
@@ -686,4 +705,52 @@ bool OptimizePerArea()
             }
         }
     return false;
+}
+
+void FuckingFeature(long px, long py)
+{
+    vector<vector<long>> TableBackup = Table;
+    vector<vector<bool>> LockedBackup = Locked;
+    vector<vector<set<long>>> CandidateBackup = Candidate;
+    long NUMBER_OF_FILLED_BACKUP = NUMBER_OF_FILLED;
+    vector<pair<long, long>> Target;
+    bool ErrorDetected = false;
+
+    long key = -1;
+    for (const long &x : Candidate[px][py])
+        if (x != Solution[px][py])
+            key = x;
+
+    for (long i = 0; i < 9; ++i)
+        for (long j = 0; j < 9; ++j)
+            if (!Locked[i][j]) Target.push_back({i, j});
+
+    cout << "Let try [" << px + 1 << ", " << py + 1 << "] = " << key << endl;
+    Fill(px, py, key, true);
+    ShowTable(px, py, true);
+    while (!ErrorDetected)
+    {
+        for (pair<long, long> X : Target)
+        {
+            if (!Locked[X.first][X.second] && Candidate[X.first][X.second].empty())
+            {
+                cout << "We can't fill any number to cell [" << X.first + 1 << ' ' << X.second + 1 << ']' << endl;
+                ErrorDetected = true;
+                break;
+            }
+            else if (Candidate[X.first][X.second].size() == 1)
+            {
+                key = *Candidate[X.first][X.second].begin();
+                cout << "We must fill " << key << " in cell [" << X.first + 1 << ' ' << X.second + 1 << ']' << endl;
+                Fill(X.first, X.second, key, true);
+                ShowTable(X.first, X.second, true);
+                break;
+            }
+        }
+    }
+
+    Table = TableBackup;
+    Locked = LockedBackup;
+    Candidate = CandidateBackup;
+    NUMBER_OF_FILLED = NUMBER_OF_FILLED_BACKUP;
 }
