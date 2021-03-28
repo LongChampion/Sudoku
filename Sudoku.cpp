@@ -11,7 +11,7 @@ vector<vector<long>> Solution(9, vector<long>(9, 0));
 vector<vector<set<long>>> Candidate(9, vector<set<long>>(9));
 vector<vector<string>> Reason(9, vector<string>(9));
 long NUMBER_OF_SOLUTION = 0;
-long NUMBER_OF_FILLED = 0;
+long NUMBER_OF_FILLED   = 0;
 
 void Initilize();
 bool ReadData();
@@ -65,7 +65,7 @@ int main()
                 ShowTable(x, y);
                 cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t";
                 cout << "Can't fill other number in this cell!" << endl;
-                if (!Reason[x][y].empty()) cout << Reason[x][y] << endl;
+                if (! Reason[x][y].empty()) cout << Reason[x][y] << endl;
                 continue;
             }
 
@@ -75,7 +75,7 @@ int main()
                 ShowTable(x, y);
                 cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t";
                 cout << "Can't fill number " << k << " in other cells in row " << x + 1 << '.' << endl;
-                if (!Reason[x][y].empty()) cout << Reason[x][y] << endl;
+                if (! Reason[x][y].empty()) cout << Reason[x][y] << endl;
                 continue;
             }
 
@@ -85,7 +85,7 @@ int main()
                 ShowTable(x, y);
                 cout << '[' << x + 1 << ", " << y + 1 << "] = " << k << "\t";
                 cout << "Can't fill number " << k << " in other cells in column " << y + 1 << '.' << endl;
-                if (!Reason[x][y].empty()) cout << Reason[x][y] << endl;
+                if (! Reason[x][y].empty()) cout << Reason[x][y] << endl;
                 continue;
             }
 
@@ -100,8 +100,8 @@ int main()
 
             bool CanBeContinue = false;
 
-            for (long i = 0; i < 9 && !CanBeContinue; ++i)
-                for (long j = 0; j < 9 && !CanBeContinue; ++j)
+            for (long i = 0; i < 9 && ! CanBeContinue; ++i)
+                for (long j = 0; j < 9 && ! CanBeContinue; ++j)
                     if (Candidate[i][j].size() == 2)
                     {
                         CanBeContinue = true;
@@ -198,7 +198,7 @@ void BruteForce(long x, long y)
         return;
     }
 
-    if (!Locked[x][y])
+    if (! Locked[x][y])
     {
         for (long k = 1; k < 10; ++k)
         {
@@ -229,7 +229,7 @@ void ShowTable(long x, long y, bool Trying)
             if (Locked[i][j])
             {
                 if (i == x && j == y)
-                    if (!Trying)
+                    if (! Trying)
                         cout << "\e[1;31m" << Table[i][j] << "\e[0m ";
                     else
                         cout << "\e[1;35m" << Table[i][j] << "\e[0m ";
@@ -305,13 +305,13 @@ void Fill(long x, long y, long key, bool Trying)
         return;
     }
 
-    if (key != Solution[x][y] && Solution[x][y] != 0 && !Trying)
+    if (key != Solution[x][y] && Solution[x][y] != 0 && ! Trying)
     {
         cout << "FATAL ERROR: Wrong filling at [" << x + 1 << ", " << y + 1 << ']' << endl;
         ShowCandidate();
     }
 
-    Table[x][y] = key;
+    Table[x][y]  = key;
     Locked[x][y] = true;
     Candidate[x][y].clear();
     ++NUMBER_OF_FILLED;
@@ -445,8 +445,8 @@ bool OptimizeByRow()
                     col.push_back(j);
             if (col.size() > 1 && col.size() < 4 && col.back() - col[0] < 3 && col.back() / 3 == col[0] / 3)
             {
-                long rx = (row / 3) * 3;
-                long ry = (col[0] / 3) * 3;
+                long rx    = (row / 3) * 3;
+                long ry    = (col[0] / 3) * 3;
                 long count = 0;
 
                 for (long i = 0; i < 3; ++i)
@@ -480,8 +480,8 @@ bool OptimizeByCol()
                     row.push_back(i);
             if (row.size() > 1 && row.size() < 4 && row.back() - row[0] < 3 && row.back() / 3 == row[0] / 3)
             {
-                long rx = (row[0] / 3) * 3;
-                long ry = (col / 3) * 3;
+                long rx    = (row[0] / 3) * 3;
+                long ry    = (col / 3) * 3;
                 long count = 0;
 
                 for (long j = 0; j < 3; ++j)
@@ -514,7 +514,7 @@ bool OptimizeByArea()
                 long row = -1, col = -1, count = 0;
 
                 for (long i = 0; i < 3; ++i)
-                    for (long j = 3; j < 3; ++j)
+                    for (long j = 0; j < 3; ++j)
                         if (Candidate[rx + i][ry + j].find(key) != Candidate[rx + i][ry + j].end())
                             A.push_back({rx + i, ry + j});
 
@@ -542,7 +542,7 @@ bool OptimizeByArea()
                             bool IsOK = true;
                             for (pair<long, long> &X : A)
                                 if (j == X.second) IsOK = false;
-                            if (!IsOK) continue;
+                            if (! IsOK) continue;
                         }
 
                         Candidate[row][j].erase(key);
@@ -559,7 +559,7 @@ bool OptimizeByArea()
                             bool IsOK = true;
                             for (pair<long, long> &X : A)
                                 if (i == X.first) IsOK = false;
-                            if (!IsOK) continue;
+                            if (! IsOK) continue;
                         }
 
                         Candidate[i][col]
@@ -585,7 +585,7 @@ bool OptimizePerRow()
     {
         col.clear();
         for (long j = 0; j < 9; ++j)
-            if (!Locked[row][j])
+            if (! Locked[row][j])
                 col.push_back(j);
 
         n = col.size();
@@ -629,7 +629,7 @@ bool OptimizePerCol()
     {
         row.clear();
         for (long i = 0; i < 9; ++i)
-            if (!Locked[i][col])
+            if (! Locked[i][col])
                 row.push_back(i);
 
         n = row.size();
@@ -675,7 +675,7 @@ bool OptimizePerArea()
             Cell.clear();
             for (long i = 0; i < 3; ++i)
                 for (long j = 0; j < 3; ++j)
-                    if (!Locked[rx + i][ry + j])
+                    if (! Locked[rx + i][ry + j])
                         Cell.push_back({rx + i, ry + j});
 
             n = Cell.size();
@@ -767,6 +767,7 @@ bool SmartEliminate()
                                 {
                                     Candidate[rx + i][ry + j].erase(key);
                                     Reason[rx + i][ry + j] += " Eliminate number " + to_string(key) + " by big column " + to_string(ry / 3 + 1) + '.';
+                                    ++count;
                                 }
 
                 if (count > 0) return true;
@@ -776,11 +777,11 @@ bool SmartEliminate()
 
 void FuckingFeature(long px, long py)
 {
-    vector<vector<long>> TableBackup = Table;
-    vector<vector<bool>> LockedBackup = Locked;
+    vector<vector<long>> TableBackup          = Table;
+    vector<vector<bool>> LockedBackup         = Locked;
     vector<vector<set<long>>> CandidateBackup = Candidate;
-    vector<vector<string>> ReasonBackup = Reason;
-    long NUMBER_OF_FILLED_BACKUP = NUMBER_OF_FILLED;
+    vector<vector<string>> ReasonBackup       = Reason;
+    long NUMBER_OF_FILLED_BACKUP              = NUMBER_OF_FILLED;
 
     vector<pair<long, long>> Target;
     bool ErrorDetected = false, Changed;
@@ -792,18 +793,18 @@ void FuckingFeature(long px, long py)
 
     for (long i = 0; i < 9; ++i)
         for (long j = 0; j < 9; ++j)
-            if (!Locked[i][j]) Target.push_back({i, j});
+            if (! Locked[i][j]) Target.push_back({i, j});
 
     cout << "Cell [" << px + 1 << ", " << py + 1 << "] can be filled by number " << key << " or number " << Solution[px][py] << endl;
     cout << "Let try [" << px + 1 << ", " << py + 1 << "] = " << key << endl;
     Fill(px, py, key, true);
     ShowTable(px, py, true);
 
-    while (!ErrorDetected)
+    while (! ErrorDetected)
     {
         Changed = false;
         for (pair<long, long> X : Target)
-            if (!Locked[X.first][X.second] && Candidate[X.first][X.second].empty())
+            if (! Locked[X.first][X.second] && Candidate[X.first][X.second].empty())
             {
                 cout << "We can't fill any number to cell [" << X.first + 1 << ", " << X.second + 1 << ']' << endl;
                 cout << Reason[X.first][X.second] << endl;
@@ -819,14 +820,14 @@ void FuckingFeature(long px, long py)
                 Changed = true;
                 break;
             }
-        if (!Changed) OptimizeCandidate();
+        if (! Changed) OptimizeCandidate();
     }
 
     cout << "Now we must fill cell [" << px + 1 << ", " << py + 1 << "] by " << Solution[px][py] << endl;
 
-    Table = TableBackup;
-    Locked = LockedBackup;
-    Candidate = CandidateBackup;
-    Reason = ReasonBackup;
+    Table            = TableBackup;
+    Locked           = LockedBackup;
+    Candidate        = CandidateBackup;
+    Reason           = ReasonBackup;
     NUMBER_OF_FILLED = NUMBER_OF_FILLED_BACKUP;
 }
